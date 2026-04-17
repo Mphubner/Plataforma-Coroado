@@ -17,7 +17,9 @@ import {
   MapPin,
   Radio,
   Search,
-  LogIn
+  LogIn,
+  Gift,
+  Calendar
 } from "lucide-react"
 import { Button, buttonVariants } from "@/components/ui/button"
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet"
@@ -47,12 +49,16 @@ const navItems = [
   { id: "units", label: "Unidades", icon: MapPin, category: "public" },
   { id: "cell", label: "Célula", icon: Users, category: "public" },
   { id: "social", label: "Social", icon: Heart, category: "public" },
-  { id: "store", label: "Loja", icon: ShoppingBag, category: "public" },
   { id: "media", label: "Mídia", icon: Radio, category: "public" },
+  { id: "events", label: "Eventos", icon: Calendar, category: "public" },
+  { id: "finance", label: "Contribuições", icon: Gift, category: "member" },
+  { id: "store", label: "Loja", icon: ShoppingBag, category: "public" },
   { id: "school", label: "IDE", icon: GraduationCap, category: "member" },
   { id: "jornada", label: "A Jornada", icon: Gamepad2, category: "member" },
+  { id: "ministries", label: "Ministérios", icon: Users, category: "member" },
   { id: "members", label: "Membros", icon: Users, category: "member" },
   { id: "admin", label: "Gestão", icon: LayoutDashboard, category: "admin" },
+  { id: "pastoral", label: "Cuidado Pastoral", icon: Users, category: "admin" },
 ]
 
 export function Layout({ children, activeTab, setActiveTab, isLoggedIn = true, userRole = 'leader' }: LayoutProps) {
@@ -61,18 +67,19 @@ export function Layout({ children, activeTab, setActiveTab, isLoggedIn = true, u
   // Navigation Logic
   const getBottomNavItems = () => {
     if (!isLoggedIn) {
-      return ["home", "pastors", "units", "cell", "social"]
+      return ["home", "events", "units", "cell", "social"]
     }
-    const base = ["cell", "school", "store"]
-    const fourth = (userRole === 'leader' || userRole === 'pastor') ? "admin" : "jornada"
-    return [...base, fourth, "members"]
+    const base = ["cell", "school", "events", "finance"]
+    const last = (userRole === 'leader' || userRole === 'pastor') ? "admin" : "jornada"
+    return [...base, last]
   }
 
   const getDesktopPrimaryItems = () => {
     if (!isLoggedIn) {
-      return ["home", "pastors", "units", "cell", "social", "store", "media"]
+      return ["home", "pastors", "events", "units", "cell", "social", "store", "media"]
     }
-    return ["home", "cell", "school", "store", "jornada", "members", "admin"]
+    const adminItems = userRole === 'pastor' || userRole === 'leader' ? ["admin", "pastoral"] : []
+    return ["home", "cell", "school", "ministries", "events", "finance", "jornada", "members", ...adminItems]
   }
 
   const bottomNavIds = getBottomNavItems()

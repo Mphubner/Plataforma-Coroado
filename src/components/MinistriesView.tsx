@@ -1,0 +1,1005 @@
+import * as React from "react"
+import { motion } from "motion/react"
+import { Users, Calendar, CheckCircle2, AlertCircle, Plus, Search, ChevronRight, Music, Heart, Camera, Coffee, Shield, Clock, XCircle, BookOpen, Home, CalendarCheck, GraduationCap } from "lucide-react"
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card"
+import { Button } from "@/components/ui/button"
+import { Input } from "@/components/ui/input"
+
+// Types
+export type BriefingStatus = 'todo' | 'in-progress' | 'done';
+
+export type Briefing = {
+  id: string;
+  ministryId: string;
+  requesterMinistry: string;
+  title: string;
+  description: string;
+  deadline: string;
+  status: BriefingStatus;
+  assigneeId?: string;
+};
+
+export type CalendarEvent = {
+  id: string;
+  ministryId: string;
+  title: string;
+  date: string;
+  type: 'post' | 'event' | 'meeting';
+};
+
+export type MemberMetrics = {
+  cellAttendance: number;
+  ideProgress: number;
+  scalePresence: number;
+};
+
+export type MinistryMember = {
+  id: string;
+  name: string;
+  role: string;
+  joinDate: string;
+  metrics: MemberMetrics;
+  avatar?: string;
+};
+
+export type ScaleStatus = 'pending' | 'accepted' | 'declined';
+
+export type ScaleAssignment = {
+  memberId: string;
+  role: string;
+  status: ScaleStatus;
+};
+
+export type Scale = {
+  id: string;
+  ministryId: string;
+  eventName: string;
+  date: string;
+  time: string;
+  assignments: ScaleAssignment[];
+  notes?: string;
+  setlist?: string[];
+};
+
+export type RequiredTrack = {
+  id: string;
+  name: string;
+  description: string;
+};
+
+export type Ministry = {
+  id: string;
+  name: string;
+  description: string;
+  leaderId: string;
+  leaderName: string;
+  icon: string;
+  requiredTracks: RequiredTrack[];
+  members: MinistryMember[];
+};
+
+// Mock Data
+const MOCK_BRIEFINGS: Briefing[] = [
+  {
+    id: "br1",
+    ministryId: "min2",
+    requesterMinistry: "Eventos",
+    title: "Arte Culto de Jovens",
+    description: "Post para o Instagram e slide para o telão.",
+    deadline: "2023-11-10",
+    status: "todo",
+  },
+  {
+    id: "br2",
+    ministryId: "min2",
+    requesterMinistry: "Louvor",
+    title: "Gravação de Ensaio",
+    description: "Cobertura em vídeo do ensaio aberto.",
+    deadline: "2023-11-15",
+    status: "in-progress",
+    assigneeId: "m4"
+  },
+  {
+    id: "br3",
+    ministryId: "min1",
+    requesterMinistry: "Pastoral",
+    title: "Música Especial Santa Ceia",
+    description: "Preparar arranjo para o hino da ceia.",
+    deadline: "2023-11-12",
+    status: "todo",
+  }
+];
+
+const MOCK_CALENDAR: CalendarEvent[] = [
+  { id: "ce1", ministryId: "min2", title: "Post: Resumo do Culto", date: "2023-11-06", type: "post" },
+  { id: "ce2", ministryId: "min2", title: "Reels: Bastidores", date: "2023-11-08", type: "post" },
+  { id: "ce3", ministryId: "min1", title: "Ensaio Geral", date: "2023-11-09", type: "meeting" },
+];
+
+const MOCK_SCALES: Scale[] = [
+  {
+    id: "sc1",
+    ministryId: "min1",
+    eventName: "Culto de Celebração",
+    date: "2023-11-05",
+    time: "18:00",
+    assignments: [
+      { memberId: "m1", role: "Vocal Principal", status: "accepted" },
+      { memberId: "m2", role: "Bateria", status: "pending" },
+      { memberId: "m3", role: "Teclado", status: "accepted" },
+    ],
+    setlist: ["Leão (Kari Jobe)", "Ruja o Leão", "Lindo És"]
+  },
+  {
+    id: "sc2",
+    ministryId: "min1",
+    eventName: "Culto de Ensino",
+    date: "2023-11-08",
+    time: "20:00",
+    assignments: [
+      { memberId: "m1", role: "Vocal", status: "declined" },
+      { memberId: "m3", role: "Teclado", status: "accepted" },
+    ],
+    setlist: ["Vem me Buscar", "Maranata"]
+  },
+  {
+    id: "sc3",
+    ministryId: "min2",
+    eventName: "Culto de Celebração",
+    date: "2023-11-05",
+    time: "18:00",
+    assignments: [
+      { memberId: "m4", role: "Fotografia", status: "accepted" },
+      { memberId: "m5", role: "Transmissão", status: "pending" },
+    ]
+  }
+];
+const MOCK_MINISTRIES: Ministry[] = [
+  {
+    id: "min1",
+    name: "Louvor",
+    description: "Ministério de adoração e música da igreja.",
+    leaderId: "lead1",
+    leaderName: "João Silva",
+    icon: "music",
+    requiredTracks: [
+      { id: "trk1", name: "Fundamentos da Adoração", description: "Obrigatório para todos os músicos e vocais." },
+      { id: "trk2", name: "Prática de Banda", description: "Alinhamento técnico e espiritual." }
+    ],
+    members: [
+      { id: "m1", name: "Ana Costa", role: "Vocal", joinDate: "2023-01-15", metrics: { cellAttendance: 100, ideProgress: 90, scalePresence: 95 }, avatar: "https://i.pravatar.cc/150?u=m1" },
+      { id: "m2", name: "Pedro Oliveira", role: "Baterista", joinDate: "2023-03-20", metrics: { cellAttendance: 80, ideProgress: 60, scalePresence: 100 }, avatar: "https://i.pravatar.cc/150?u=m2" },
+      { id: "m3", name: "Lucas Santos", role: "Tecladista", joinDate: "2023-06-10", metrics: { cellAttendance: 50, ideProgress: 40, scalePresence: 90 }, avatar: "https://i.pravatar.cc/150?u=m3" },
+    ]
+  },
+  {
+    id: "min2",
+    name: "Comunicação",
+    description: "Responsável pelas mídias sociais, fotos e vídeos.",
+    leaderId: "lead2",
+    leaderName: "Maria Souza",
+    icon: "camera",
+    requiredTracks: [
+      { id: "trk3", name: "Comunicação do Reino", description: "Princípios de comunicação cristã." }
+    ],
+    members: [
+      { id: "m4", name: "Carlos Mendes", role: "Fotógrafo", joinDate: "2023-02-10", metrics: { cellAttendance: 90, ideProgress: 80, scalePresence: 85 }, avatar: "https://i.pravatar.cc/150?u=m4" },
+      { id: "m5", name: "Julia Lima", role: "Social Media", joinDate: "2023-05-05", metrics: { cellAttendance: 100, ideProgress: 100, scalePresence: 70 }, avatar: "https://i.pravatar.cc/150?u=m5" },
+    ]
+  },
+  {
+    id: "min3",
+    name: "Recepção",
+    description: "Acolhimento e boas-vindas aos visitantes e membros.",
+    leaderId: "lead3",
+    leaderName: "Marcos Paulo",
+    icon: "coffee",
+    requiredTracks: [],
+    members: [
+      { id: "m6", name: "Fernanda Silva", role: "Recepcionista", joinDate: "2023-04-12", metrics: { cellAttendance: 80, ideProgress: 70, scalePresence: 75 }, avatar: "https://i.pravatar.cc/150?u=m6" },
+    ]
+  },
+  {
+    id: "min4",
+    name: "Kids",
+    description: "Ensino e cuidado com as crianças durante os cultos.",
+    leaderId: "lead4",
+    leaderName: "Pra. Ana",
+    icon: "heart",
+    requiredTracks: [
+      { id: "trk4", name: "Ministério Infantil", description: "Didática e cuidado com os pequeninos." }
+    ],
+    members: [
+      { id: "m7", name: "Beatriz Costa", role: "Professora", joinDate: "2023-01-20", metrics: { cellAttendance: 100, ideProgress: 100, scalePresence: 100 }, avatar: "https://i.pravatar.cc/150?u=m7" },
+      { id: "m8", name: "Rafael Gomes", role: "Apoio", joinDate: "2023-07-01", metrics: { cellAttendance: 40, ideProgress: 30, scalePresence: 80 }, avatar: "https://i.pravatar.cc/150?u=m8" },
+    ]
+  }
+];
+
+const getIcon = (iconName: string) => {
+  switch (iconName) {
+    case 'music': return <Music className="w-6 h-6" />;
+    case 'camera': return <Camera className="w-6 h-6" />;
+    case 'coffee': return <Coffee className="w-6 h-6" />;
+    case 'heart': return <Heart className="w-6 h-6" />;
+    case 'shield': return <Shield className="w-6 h-6" />;
+    default: return <Users className="w-6 h-6" />;
+  }
+};
+
+const getHealthColor = (score: number) => {
+  if (score >= 80) return "text-green-400";
+  if (score >= 60) return "text-yellow-400";
+  return "text-red-400";
+};
+
+const getHealthBg = (score: number) => {
+  if (score >= 80) return "bg-green-400";
+  if (score >= 60) return "bg-yellow-400";
+  return "bg-red-400";
+};
+
+export function MinistriesView() {
+  const [selectedMinistry, setSelectedMinistry] = React.useState<Ministry | null>(null);
+  const [activeTab, setActiveTab] = React.useState("overview");
+  const [searchQuery, setSearchQuery] = React.useState("");
+  const [scales, setScales] = React.useState<Scale[]>(MOCK_SCALES);
+  const [briefings, setBriefings] = React.useState<Briefing[]>(MOCK_BRIEFINGS);
+  const [calendarEvents, setCalendarEvents] = React.useState<CalendarEvent[]>(MOCK_CALENDAR);
+  const [showBriefingForm, setShowBriefingForm] = React.useState(false);
+  const [showScaleForm, setShowScaleForm] = React.useState(false);
+  const [newScale, setNewScale] = React.useState<Partial<Scale>>({
+    eventName: '',
+    date: '',
+    time: '',
+    setlist: [],
+    assignments: []
+  });
+  const [newBriefing, setNewBriefing] = React.useState<Partial<Briefing>>({
+    title: '',
+    description: '',
+    requesterMinistry: '',
+    deadline: '',
+    status: 'todo'
+  });
+
+  // Simulate current user (e.g., Pedro Oliveira, Baterista in Louvor)
+  const currentUserId = "m2";
+
+  const filteredMinistries = MOCK_MINISTRIES.filter(m => 
+    m.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+    m.leaderName.toLowerCase().includes(searchQuery.toLowerCase())
+  );
+
+  const handleStatusChange = (scaleId: string, memberId: string, newStatus: ScaleStatus) => {
+    setScales(prev => prev.map(scale => {
+      if (scale.id === scaleId) {
+        return {
+          ...scale,
+          assignments: scale.assignments.map(a => 
+            a.memberId === memberId ? { ...a, status: newStatus } : a
+          )
+        };
+      }
+      return scale;
+    }));
+  };
+
+  const renderStatusBadge = (status: ScaleStatus) => {
+    switch (status) {
+      case 'accepted':
+        return <span className="px-2 py-1 rounded-full text-[10px] bg-green-500/20 text-green-400 border border-green-500/30 flex items-center gap-1"><CheckCircle2 className="w-3 h-3" /> Confirmado</span>;
+      case 'declined':
+        return <span className="px-2 py-1 rounded-full text-[10px] bg-red-500/20 text-red-400 border border-red-500/30 flex items-center gap-1"><XCircle className="w-3 h-3" /> Recusado</span>;
+      case 'pending':
+      default:
+        return <span className="px-2 py-1 rounded-full text-[10px] bg-yellow-500/20 text-yellow-400 border border-yellow-500/30 flex items-center gap-1"><Clock className="w-3 h-3" /> Pendente</span>;
+    }
+  };
+
+  const renderBriefingCard = (briefing: Briefing) => {
+    const assignee = selectedMinistry?.members.find(m => m.id === briefing.assigneeId);
+    return (
+      <Card key={briefing.id} className="bg-white/5 border-white/10 hover:border-white/20 transition-colors">
+        <CardContent className="p-4 space-y-3">
+          <div className="flex justify-between items-start">
+            <span className="text-[10px] border border-white/10 text-white/60 px-2 py-1 rounded-full">De: {briefing.requesterMinistry}</span>
+            <span className="text-[10px] text-white/40 flex items-center gap-1"><Calendar className="w-3 h-3"/> {new Date(briefing.deadline).toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit' })}</span>
+          </div>
+          <div>
+            <h4 className="font-bold text-sm leading-tight">{briefing.title}</h4>
+            <p className="text-xs text-white/60 mt-1 line-clamp-2">{briefing.description}</p>
+          </div>
+          <div className="pt-2 border-t border-white/10 flex justify-between items-center">
+            {assignee ? (
+              <div className="flex items-center gap-2">
+                <div className="w-5 h-5 rounded-full bg-white/10 flex items-center justify-center text-[8px] font-bold">
+                  {assignee.name.substring(0, 2).toUpperCase()}
+                </div>
+                <span className="text-[10px] text-white/60">{assignee.name.split(' ')[0]}</span>
+              </div>
+            ) : (
+              <span className="text-[10px] text-white/40 italic">Não atribuído</span>
+            )}
+            <Button size="sm" variant="ghost" className="h-6 px-2 text-[10px] text-white/40 hover:text-white">Mover →</Button>
+          </div>
+        </CardContent>
+      </Card>
+    );
+  };
+
+  if (selectedMinistry) {
+    const ministryScales = scales.filter(s => s.ministryId === selectedMinistry.id);
+    const ministryBriefings = briefings.filter(b => b.ministryId === selectedMinistry.id);
+    const ministryCalendar = calendarEvents.filter(c => c.ministryId === selectedMinistry.id);
+    return (
+      <div className="container mx-auto px-4 py-24 max-w-6xl space-y-8">
+        <div className="flex items-center gap-4 mb-8">
+          <Button variant="ghost" className="text-white/60 hover:text-white" onClick={() => { setSelectedMinistry(null); setActiveTab("overview"); }}>
+            ← Voltar
+          </Button>
+          <div className="flex items-center gap-3">
+            <div className="w-12 h-12 rounded-xl bg-primary/20 text-primary flex items-center justify-center">
+              {getIcon(selectedMinistry.icon)}
+            </div>
+            <div>
+              <h1 className="text-3xl font-bold">{selectedMinistry.name}</h1>
+              <p className="text-white/60">Líder: {selectedMinistry.leaderName}</p>
+            </div>
+          </div>
+        </div>
+
+        <div className="w-full space-y-6">
+          <div className="flex gap-2 bg-zinc-900 border border-white/10 p-1 rounded-lg w-fit overflow-x-auto max-w-full">
+            <button 
+              onClick={() => setActiveTab("overview")}
+              className={`px-4 py-2 text-sm font-medium rounded-md transition-colors whitespace-nowrap ${activeTab === "overview" ? "bg-white/10 text-white" : "text-white/60 hover:text-white hover:bg-white/5"}`}
+            >
+              Visão Geral
+            </button>
+            <button 
+              onClick={() => setActiveTab("scales")}
+              className={`px-4 py-2 text-sm font-medium rounded-md transition-colors whitespace-nowrap ${activeTab === "scales" ? "bg-white/10 text-white" : "text-white/60 hover:text-white hover:bg-white/5"}`}
+            >
+              Escalas de Servos
+            </button>
+            <button 
+              onClick={() => setActiveTab("briefings")}
+              className={`px-4 py-2 text-sm font-medium rounded-md transition-colors whitespace-nowrap ${activeTab === "briefings" ? "bg-white/10 text-white" : "text-white/60 hover:text-white hover:bg-white/5"}`}
+            >
+              Briefings (Doc 15)
+            </button>
+            <button 
+              onClick={() => setActiveTab("training")}
+              className={`px-4 py-2 text-sm font-medium rounded-md transition-colors whitespace-nowrap ${activeTab === "training" ? "bg-white/10 text-white" : "text-white/60 hover:text-white hover:bg-white/5"}`}
+            >
+              Treinamento (IDE)
+            </button>
+            <button 
+              onClick={() => setActiveTab("calendar")}
+              className={`px-4 py-2 text-sm font-medium rounded-md transition-colors whitespace-nowrap ${activeTab === "calendar" ? "bg-white/10 text-white" : "text-white/60 hover:text-white hover:bg-white/5"}`}
+            >
+              Calendário
+            </button>
+          </div>
+
+          {activeTab === "overview" && (
+            <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+              <div className="lg:col-span-2 space-y-6">
+                <Card className="bg-zinc-900 border-white/10">
+                  <CardHeader className="flex flex-row items-center justify-between">
+                    <div>
+                      <CardTitle>Equipe ({selectedMinistry.members.length})</CardTitle>
+                      <CardDescription>Membros ativos neste ministério</CardDescription>
+                    </div>
+                    <Button size="sm" className="bg-primary text-black">
+                      <Plus className="w-4 h-4 mr-2" />
+                      Adicionar Servo
+                    </Button>
+                  </CardHeader>
+              <CardContent>
+                <div className="space-y-4">
+                  {selectedMinistry.members.map(member => {
+                    const healthScore = Math.round((member.metrics.cellAttendance + member.metrics.ideProgress + member.metrics.scalePresence) / 3);
+                    return (
+                      <div key={member.id} className="flex items-center justify-between p-4 rounded-xl bg-white/5 border border-white/10 hover:bg-white/10 transition-colors">
+                        <div className="flex items-center gap-4">
+                          <div className="w-8 h-8 rounded-full bg-white/10 flex items-center justify-center text-xs font-bold">
+                            {member.name.substring(0, 2).toUpperCase()}
+                          </div>
+                          <div>
+                            <p className="font-bold">{member.name}</p>
+                            <p className="text-xs text-white/60">{member.role} • Desde {new Date(member.joinDate).toLocaleDateString('pt-BR')}</p>
+                          </div>
+                        </div>
+                        <div className="flex flex-col items-end gap-2 w-48">
+                          <div className="flex items-center gap-2">
+                            <span className="text-xs text-white/60">Saúde Geral:</span>
+                            <span className={`text-sm font-bold ${getHealthColor(healthScore)}`}>{healthScore}%</span>
+                          </div>
+                          <div className={`w-full h-2 rounded-full ${getHealthBg(healthScore)}`} />
+                          <div className="flex items-center justify-between w-full text-[10px] text-white/40 mt-1">
+                            <span title="Frequência na Célula" className="flex items-center gap-1"><Home className="w-3 h-3"/> {member.metrics.cellAttendance}%</span>
+                            <span title="Progresso na IDE" className="flex items-center gap-1"><GraduationCap className="w-3 h-3"/> {member.metrics.ideProgress}%</span>
+                            <span title="Presença nas Escalas" className="flex items-center gap-1"><CalendarCheck className="w-3 h-3"/> {member.metrics.scalePresence}%</span>
+                          </div>
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+              </CardContent>
+            </Card>
+          </div>
+
+          <div className="space-y-6">
+            <Card className="bg-zinc-900 border-white/10">
+              <CardHeader className="flex flex-row items-center justify-between">
+                <div>
+                  <CardTitle>Próximas Escalas</CardTitle>
+                  <CardDescription>Gerencie as escalas de cultos e eventos</CardDescription>
+                </div>
+                <Button size="sm" variant="outline" className="border-white/10" onClick={() => setShowScaleForm(true)}>
+                  <Plus className="w-4 h-4 mr-2" />
+                  Nova Escala
+                </Button>
+              </CardHeader>
+              <CardContent>
+                <div className="space-y-4">
+                  {ministryScales.length === 0 ? (
+                    <div className="p-8 text-center border-2 border-dashed border-white/10 rounded-xl text-white/40">
+                      <Calendar className="w-8 h-8 mx-auto mb-2 opacity-50" />
+                      <p className="text-sm">Nenhuma escala programada.</p>
+                    </div>
+                  ) : (
+                    ministryScales.map(scale => (
+                      <div key={scale.id} className="p-4 rounded-xl bg-white/5 border border-white/10 space-y-4">
+                        <div className="flex justify-between items-start">
+                          <div>
+                            <h4 className="font-bold text-lg">{scale.eventName}</h4>
+                            <p className="text-sm text-white/60 flex items-center gap-2">
+                              <Calendar className="w-4 h-4" />
+                              {new Date(scale.date).toLocaleDateString('pt-BR')} às {scale.time}
+                            </p>
+                          </div>
+                        </div>
+
+                        {scale.setlist && scale.setlist.length > 0 && (
+                          <div className="bg-black/20 p-3 rounded-lg">
+                            <p className="text-xs font-bold text-white/60 mb-2 uppercase tracking-wider">Repertório</p>
+                            <ul className="text-sm space-y-1">
+                              {scale.setlist.map((song, idx) => (
+                                <li key={idx} className="flex items-center gap-2">
+                                  <Music className="w-3 h-3 text-primary" />
+                                  {song}
+                                </li>
+                              ))}
+                            </ul>
+                          </div>
+                        )}
+
+                        <div className="space-y-2">
+                          <p className="text-xs font-bold text-white/60 uppercase tracking-wider">Equipe Escalada</p>
+                          {scale.assignments.map(assignment => {
+                            const member = selectedMinistry.members.find(m => m.id === assignment.memberId);
+                            if (!member) return null;
+                            const isCurrentUser = member.id === currentUserId;
+
+                            return (
+                              <div key={assignment.memberId} className="flex items-center justify-between bg-black/20 p-2 rounded-lg">
+                                <div className="flex items-center gap-3">
+                                  <div className="w-8 h-8 rounded-full bg-white/10 flex items-center justify-center text-xs font-bold">
+                                    {member.name.substring(0, 2).toUpperCase()}
+                                  </div>
+                                  <div>
+                                    <p className="text-sm font-medium">{member.name} {isCurrentUser && "(Você)"}</p>
+                                    <p className="text-xs text-white/60">{assignment.role}</p>
+                                  </div>
+                                </div>
+                                <div className="flex items-center gap-2">
+                                  {isCurrentUser && assignment.status === 'pending' ? (
+                                    <div className="flex gap-1">
+                                      <Button size="sm" variant="outline" className="h-7 px-2 text-xs border-green-500/30 hover:bg-green-500/20 text-green-400" onClick={() => handleStatusChange(scale.id, member.id, 'accepted')}>
+                                        Aceitar
+                                      </Button>
+                                      <Button size="sm" variant="outline" className="h-7 px-2 text-xs border-red-500/30 hover:bg-red-500/20 text-red-400" onClick={() => handleStatusChange(scale.id, member.id, 'declined')}>
+                                        Recusar
+                                      </Button>
+                                    </div>
+                                  ) : (
+                                    renderStatusBadge(assignment.status)
+                                  )}
+                                </div>
+                              </div>
+                            );
+                          })}
+                        </div>
+                      </div>
+                    ))
+                  )}
+                </div>
+              </CardContent>
+            </Card>
+
+            <Card className="bg-zinc-900 border-white/10">
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <BookOpen className="w-5 h-5 text-primary" />
+                  Trilhas na IDE
+                </CardTitle>
+                <CardDescription>Treinamentos obrigatórios para este ministério</CardDescription>
+              </CardHeader>
+              <CardContent>
+                <div className="space-y-3">
+                  {selectedMinistry.requiredTracks && selectedMinistry.requiredTracks.length > 0 ? (
+                    selectedMinistry.requiredTracks.map(track => (
+                      <div key={track.id} className="p-3 rounded-lg bg-white/5 border border-white/10">
+                        <h4 className="text-sm font-bold">{track.name}</h4>
+                        <p className="text-xs text-white/60 mt-1">{track.description}</p>
+                        <Button size="sm" variant="link" className="text-primary px-0 h-auto mt-2 text-xs">
+                          Ver na Escola IDE →
+                        </Button>
+                      </div>
+                    ))
+                  ) : (
+                    <p className="text-sm text-white/40 text-center py-4">Nenhuma trilha obrigatória vinculada.</p>
+                  )}
+                </div>
+              </CardContent>
+            </Card>
+          </div>
+        </div>
+        )}
+
+        {activeTab === "briefings" && (
+          <div>
+            <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 mb-6">
+              <div>
+                <h2 className="text-2xl font-bold">Briefings (Doc 15)</h2>
+                <p className="text-white/60">Gerencie as demandas solicitadas a este ministério.</p>
+              </div>
+              <Button className="bg-primary text-black" onClick={() => setShowBriefingForm(true)}>
+                <Plus className="w-4 h-4 mr-2" />
+                Novo Briefing
+              </Button>
+            </div>
+
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+              <div className="space-y-4">
+                <div className="flex items-center justify-between">
+                  <h3 className="font-bold text-white/80 flex items-center gap-2"><AlertCircle className="w-4 h-4 text-yellow-400"/> Pendentes</h3>
+                  <span className="px-2 py-1 rounded-full text-xs border border-white/10">{ministryBriefings.filter(b => b.status === 'todo').length}</span>
+                </div>
+                {ministryBriefings.filter(b => b.status === 'todo').map(renderBriefingCard)}
+              </div>
+              <div className="space-y-4">
+                <div className="flex items-center justify-between">
+                  <h3 className="font-bold text-white/80 flex items-center gap-2"><Clock className="w-4 h-4 text-blue-400"/> Em Andamento</h3>
+                  <span className="px-2 py-1 rounded-full text-xs border border-white/10">{ministryBriefings.filter(b => b.status === 'in-progress').length}</span>
+                </div>
+                {ministryBriefings.filter(b => b.status === 'in-progress').map(renderBriefingCard)}
+              </div>
+              <div className="space-y-4">
+                <div className="flex items-center justify-between">
+                  <h3 className="font-bold text-white/80 flex items-center gap-2"><CheckCircle2 className="w-4 h-4 text-green-400"/> Concluídos</h3>
+                  <span className="px-2 py-1 rounded-full text-xs border border-white/10">{ministryBriefings.filter(b => b.status === 'done').length}</span>
+                </div>
+                {ministryBriefings.filter(b => b.status === 'done').map(renderBriefingCard)}
+              </div>
+            </div>
+          </div>
+        )}
+
+        {activeTab === "scales" && (
+          <div className="space-y-6">
+            <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 mb-6">
+              <div>
+                <h2 className="text-2xl font-bold">Gestão Acadêmica e Escalas</h2>
+                <p className="text-white/60">Controle de quem serve e quando serve.</p>
+              </div>
+              <Button onClick={() => setShowScaleForm(true)} className="bg-primary text-black">
+                <Plus className="w-4 h-4 mr-2" />
+                Nova Escala
+              </Button>
+            </div>
+            
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              {ministryScales.length === 0 ? (
+                <div className="col-span-full p-8 text-center text-white/40 border border-white/10 rounded-xl bg-zinc-900 border-dashed">
+                  Nenhuma escala programada encontrada.
+                </div>
+              ) : (
+                ministryScales.map(scale => (
+                  <Card key={scale.id} className="bg-zinc-900 border-white/10 flex flex-col">
+                    <CardHeader className="pb-2">
+                      <div className="flex justify-between items-start">
+                        <div>
+                          <CardTitle className="text-lg">{scale.eventName}</CardTitle>
+                          <CardDescription className="flex items-center gap-2 mt-1">
+                            <Calendar className="w-3 h-3" /> {new Date(scale.date).toLocaleDateString('pt-BR')} 
+                            <Clock className="w-3 h-3 ml-2" /> {scale.time}
+                          </CardDescription>
+                        </div>
+                        <Button variant="ghost" size="icon" className="h-8 w-8 text-white/40 hover:text-white">
+                          <ChevronRight className="w-4 h-4" />
+                        </Button>
+                      </div>
+                    </CardHeader>
+                    <CardContent className="flex-1 space-y-4">
+                      {scale.setlist && scale.setlist.length > 0 && (
+                        <div className="p-3 bg-white/5 rounded-lg border border-white/10 space-y-2">
+                          <p className="text-xs font-bold text-white/60 flex items-center gap-1"><Music className="w-3 h-3" /> Setlist</p>
+                          <ul className="text-sm space-y-1 list-disc list-inside">
+                            {scale.setlist.map((song, idx) => (
+                              <li key={idx} className="text-white/80 truncate">{song}</li>
+                            ))}
+                          </ul>
+                        </div>
+                      )}
+                      
+                      <div className="space-y-3">
+                        <p className="text-xs font-bold text-white/60 flex items-center gap-1"><Users className="w-3 h-3" /> Servos Escalados ({scale.assignments.length})</p>
+                        <div className="grid gap-2">
+                          {scale.assignments.map(assign => {
+                            const member = selectedMinistry.members.find(m => m.id === assign.memberId);
+                            if (!member) return null;
+                            return (
+                              <div key={assign.memberId} className="flex justify-between items-center bg-black/20 p-2 border border-white/5 rounded-lg">
+                                <div className="flex items-center gap-2">
+                                  <div className="w-6 h-6 rounded-full bg-white/10 flex items-center justify-center text-[10px] font-bold">
+                                    {member.name.substring(0,2).toUpperCase()}
+                                  </div>
+                                  <div>
+                                    <p className="text-xs font-bold leading-tight">{member.name}</p>
+                                    <p className="text-[10px] text-white/40">{assign.role}</p>
+                                  </div>
+                                </div>
+                                {renderStatusBadge(assign.status)}
+                              </div>
+                            )
+                          })}
+                        </div>
+                      </div>
+                    </CardContent>
+                  </Card>
+                ))
+              )}
+            </div>
+          </div>
+        )}
+
+        {activeTab === "calendar" && (
+          <div>
+            <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 mb-6">
+              <div>
+                <h2 className="text-2xl font-bold">Calendário Editorial & Eventos</h2>
+                <p className="text-white/60">Cronograma de postagens, ensaios e atividades.</p>
+              </div>
+              <Button className="bg-primary text-black">
+                <Plus className="w-4 h-4 mr-2" />
+                Agendar
+              </Button>
+            </div>
+
+            <Card className="bg-zinc-900 border-white/10">
+              <CardContent className="p-0">
+                <div className="divide-y divide-white/10">
+                  {ministryCalendar.length === 0 ? (
+                    <div className="p-8 text-center text-white/40">Nenhum evento agendado.</div>
+                  ) : (
+                    ministryCalendar.sort((a,b) => new Date(a.date).getTime() - new Date(b.date).getTime()).map(event => (
+                      <div key={event.id} className="p-4 flex items-center justify-between hover:bg-white/5 transition-colors">
+                        <div className="flex items-center gap-4">
+                          <div className="w-12 h-12 rounded-xl bg-white/5 flex flex-col items-center justify-center border border-white/10">
+                            <span className="text-xs text-white/60 uppercase">{new Date(event.date).toLocaleDateString('pt-BR', { month: 'short' })}</span>
+                            <span className="font-bold">{new Date(event.date).getDate()}</span>
+                          </div>
+                          <div>
+                            <h4 className="font-bold">{event.title}</h4>
+                            <div className="flex items-center gap-2 mt-1">
+                              <span className="px-2 py-1 rounded-full text-[10px] border border-white/10">
+                                {event.type === 'post' ? 'Postagem' : event.type === 'meeting' ? 'Reunião/Ensaio' : 'Evento'}
+                              </span>
+                            </div>
+                          </div>
+                        </div>
+                        <Button size="sm" variant="ghost" className="text-white/40 hover:text-white">Editar</Button>
+                      </div>
+                    ))
+                  )}
+                </div>
+              </CardContent>
+            </Card>
+          </div>
+        )}
+        
+        {activeTab === "training" && (
+          <div className="space-y-6">
+            <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 mb-6">
+              <div>
+                <h2 className="text-2xl font-bold">Escola IDE & Trilhas</h2>
+                <p className="text-white/60">Acompanhe as trilhas obrigatórias e o progresso da equipe.</p>
+              </div>
+              <Button className="bg-primary text-black">
+                <Plus className="w-4 h-4 mr-2" />
+                Vincular Nova Trilha
+              </Button>
+            </div>
+
+            {selectedMinistry.requiredTracks.length > 0 && (
+              <div className="space-y-4 mb-8">
+                <h3 className="text-sm font-bold text-white/50 uppercase tracking-widest">Trilhas Obrigatórias do Desempenho</h3>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  {selectedMinistry.requiredTracks.map(track => (
+                    <div key={track.id} className="p-4 rounded-xl bg-white/5 border border-white/10 hover:bg-white/10 transition-colors flex justify-between items-center group">
+                      <div className="flex items-start gap-3">
+                        <div className="w-8 h-8 rounded-full bg-primary/20 text-primary flex items-center justify-center mt-1">
+                          <BookOpen className="w-4 h-4" />
+                        </div>
+                        <div>
+                          <h4 className="font-bold text-white">{track.name}</h4>
+                          <p className="text-xs text-white/60">{track.description}</p>
+                        </div>
+                      </div>
+                      <ChevronRight className="w-4 h-4 text-white/20 group-hover:text-white/60 transition-colors" />
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            <div className="space-y-4">
+              <h3 className="text-sm font-bold text-white/50 uppercase tracking-widest">Engajamento Escolar da Equipe</h3>
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                {selectedMinistry.members.map(member => (
+                  <Card key={member.id} className="bg-zinc-900 border-white/10 hover:border-white/20 transition-all">
+                    <CardContent className="p-4 space-y-4">
+                      <div className="flex items-center gap-3">
+                        <div className="w-10 h-10 rounded-full bg-white/10 flex items-center justify-center text-sm font-bold">
+                          {member.name.substring(0, 2).toUpperCase()}
+                        </div>
+                        <div>
+                          <p className="font-bold text-sm leading-none">{member.name}</p>
+                          <p className="text-[10px] text-white/40 mt-1">{member.role}</p>
+                        </div>
+                      </div>
+                      <div className="space-y-2">
+                        <div className="flex justify-between text-xs text-white/60">
+                          <span>Progresso Médio na IDE</span>
+                          <span>{member.metrics.ideProgress}%</span>
+                        </div>
+                        <div className="h-1.5 bg-black rounded-full overflow-hidden">
+                          <div className={`h-full ${member.metrics.ideProgress > 70 ? 'bg-green-500' : member.metrics.ideProgress > 40 ? 'bg-yellow-500' : 'bg-red-500'}`} style={{ width: `${member.metrics.ideProgress}%` }} />
+                        </div>
+                        {member.metrics.ideProgress < 40 && (
+                          <p className="text-[10px] text-red-400 mt-1 flex items-center gap-1">
+                            <AlertCircle className="w-3 h-3" /> Requer acompanhamento do líder
+                          </p>
+                        )}
+                      </div>
+                      <Button variant="outline" size="sm" className="w-full h-8 text-[10px] border-white/10 hover:bg-white/5">
+                        Ver Boletim Escolar
+                      </Button>
+                    </CardContent>
+                  </Card>
+                ))}
+              </div>
+            </div>
+          </div>
+        )}
+
+        {showBriefingForm && (
+          <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80">
+            <motion.div 
+              initial={{ opacity: 0, scale: 0.95 }}
+              animate={{ opacity: 1, scale: 1 }}
+              className="bg-zinc-900 border border-white/10 rounded-xl max-w-lg w-full overflow-hidden"
+            >
+              <div className="p-6 space-y-4">
+                <h3 className="text-xl font-bold">Novo Briefing (Doc 15)</h3>
+                <p className="text-sm text-white/60">Crie uma nova solicitação para o ministério.</p>
+                <div className="space-y-4">
+                  <div className="space-y-2">
+                    <label className="text-sm font-bold">Título</label>
+                    <Input 
+                      placeholder="Ex: Arte Culto de Jovens" 
+                      className="bg-black border-white/10"
+                      value={newBriefing.title}
+                      onChange={(e) => setNewBriefing({...newBriefing, title: e.target.value})}
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <label className="text-sm font-bold">Ministério Solicitante</label>
+                    <Input 
+                      placeholder="Ex: Eventos" 
+                      className="bg-black border-white/10"
+                      value={newBriefing.requesterMinistry}
+                      onChange={(e) => setNewBriefing({...newBriefing, requesterMinistry: e.target.value})}
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <label className="text-sm font-bold">Descrição / Detalhes</label>
+                    <textarea 
+                      placeholder="Explique os detalhes da solicitação..." 
+                      className="w-full bg-black border border-white/10 rounded-md p-3 text-sm min-h-[100px]"
+                      value={newBriefing.description}
+                      onChange={(e) => setNewBriefing({...newBriefing, description: e.target.value})}
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <label className="text-sm font-bold">Prazo (Deadline)</label>
+                    <Input 
+                      type="date"
+                      className="bg-black border-white/10"
+                      value={newBriefing.deadline}
+                      onChange={(e) => setNewBriefing({...newBriefing, deadline: e.target.value})}
+                    />
+                  </div>
+                </div>
+                <div className="flex gap-3 pt-4">
+                  <Button className="flex-1 bg-white/10 text-white hover:bg-white/20" onClick={() => setShowBriefingForm(false)}>Cancelar</Button>
+                  <Button className="flex-1 bg-primary text-black font-bold" onClick={() => {
+                    if (newBriefing.title && newBriefing.deadline) {
+                      setBriefings([...briefings, { ...newBriefing, id: `br-${Date.now()}`, ministryId: selectedMinistry.id } as Briefing]);
+                      setShowBriefingForm(false);
+                      setNewBriefing({ title: '', description: '', requesterMinistry: '', deadline: '', status: 'todo' });
+                    }
+                  }}>Enviar Solicitação</Button>
+                </div>
+              </div>
+            </motion.div>
+          </div>
+        )}
+        
+        {showScaleForm && (
+          <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80">
+            <motion.div 
+              initial={{ opacity: 0, scale: 0.95 }}
+              animate={{ opacity: 1, scale: 1 }}
+              className="bg-zinc-900 border border-white/10 rounded-xl max-w-lg w-full overflow-hidden"
+            >
+              <div className="p-6 space-y-4">
+                <h3 className="text-xl font-bold">Nova Escala</h3>
+                <p className="text-sm text-white/60">Agende a equipe para um novo culto ou evento.</p>
+                <div className="space-y-4">
+                  <div className="space-y-2">
+                    <label className="text-sm font-bold">Nome do Evento</label>
+                    <Input 
+                      placeholder="Ex: Culto de Celebração" 
+                      className="bg-black border-white/10"
+                      value={newScale.eventName}
+                      onChange={(e) => setNewScale({...newScale, eventName: e.target.value})}
+                    />
+                  </div>
+                  <div className="grid grid-cols-2 gap-4">
+                    <div className="space-y-2">
+                      <label className="text-sm font-bold">Data</label>
+                      <Input 
+                        type="date"
+                        className="bg-black border-white/10"
+                        value={newScale.date}
+                        onChange={(e) => setNewScale({...newScale, date: e.target.value})}
+                      />
+                    </div>
+                    <div className="space-y-2">
+                      <label className="text-sm font-bold">Hora</label>
+                      <Input 
+                        type="time"
+                        className="bg-black border-white/10"
+                        value={newScale.time}
+                        onChange={(e) => setNewScale({...newScale, time: e.target.value})}
+                      />
+                    </div>
+                  </div>
+                  <div className="space-y-2">
+                    <label className="text-sm font-bold">Adicionar Servos</label>
+                    <div className="border border-white/10 rounded-lg max-h-32 overflow-y-auto p-2 bg-black/50 space-y-1">
+                      {selectedMinistry.members.map(member => {
+                        const isSelected = newScale.assignments?.some(a => a.memberId === member.id);
+                        return (
+                          <div key={member.id} className="flex items-center gap-2 p-1">
+                            <input 
+                              type="checkbox" 
+                              checked={isSelected}
+                              onChange={(e) => {
+                                if (e.target.checked) {
+                                  setNewScale({
+                                    ...newScale, 
+                                    assignments: [...(newScale.assignments || []), { memberId: member.id, role: member.role, status: 'pending' }]
+                                  })
+                                } else {
+                                  setNewScale({
+                                    ...newScale, 
+                                    assignments: (newScale.assignments || []).filter(a => a.memberId !== member.id)
+                                  })
+                                }
+                              }}
+                            />
+                            <span className="text-sm">{member.name} - {member.role}</span>
+                          </div>
+                        )
+                      })}
+                    </div>
+                  </div>
+                </div>
+                <div className="flex gap-3 pt-4">
+                  <Button className="flex-1 bg-white/10 text-white hover:bg-white/20" onClick={() => setShowScaleForm(false)}>Cancelar</Button>
+                  <Button className="flex-1 bg-primary text-black font-bold" onClick={() => {
+                    if (newScale.eventName && newScale.date && newScale.time) {
+                      setScales([...scales, { ...newScale, id: `sc-${Date.now()}`, ministryId: selectedMinistry.id } as Scale]);
+                      setShowScaleForm(false);
+                      setNewScale({ eventName: '', date: '', time: '', setlist: [], assignments: [] });
+                    }
+                  }}>Salvar Escala</Button>
+                </div>
+              </div>
+            </motion.div>
+          </div>
+        )}
+      </div>
+      </div>
+    );
+  }
+
+  return (
+    <div className="container mx-auto px-4 py-24 max-w-6xl space-y-8">
+      <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
+        <div>
+          <h1 className="text-4xl font-black tracking-tight uppercase">Ministérios</h1>
+          <p className="text-white/60 mt-2">Gestão de times, escalas e saúde dos servos.</p>
+        </div>
+        <div className="flex items-center gap-2 w-full md:w-auto">
+          <div className="relative flex-1 md:w-64">
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-white/40" />
+            <Input 
+              placeholder="Buscar ministério..." 
+              className="pl-9 bg-zinc-900 border-white/10"
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+            />
+          </div>
+          <Button className="bg-primary text-black font-bold whitespace-nowrap">
+            <Plus className="w-4 h-4 mr-2" />
+            Novo Ministério
+          </Button>
+        </div>
+      </div>
+
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+        {filteredMinistries.map(ministry => (
+          <motion.div
+            key={ministry.id}
+            whileHover={{ y: -5 }}
+            className="cursor-pointer"
+            onClick={() => setSelectedMinistry(ministry)}
+          >
+            <Card className="bg-zinc-900 border-white/10 h-full hover:border-primary/50 transition-colors">
+              <CardContent className="p-6">
+                <div className="flex items-start justify-between mb-4">
+                  <div className="w-12 h-12 rounded-xl bg-primary/20 text-primary flex items-center justify-center">
+                    {getIcon(ministry.icon)}
+                  </div>
+                  <span className="px-2 py-1 rounded-full text-[10px] border border-white/10 text-white/60">
+                    {ministry.members.length} servos
+                  </span>
+                </div>
+                <h3 className="text-xl font-bold mb-2">{ministry.name}</h3>
+                <p className="text-sm text-white/60 mb-4 line-clamp-2">{ministry.description}</p>
+                
+                <div className="pt-4 border-t border-white/10 flex items-center justify-between">
+                  <div className="flex items-center gap-2">
+                    <div className="w-6 h-6 rounded-full bg-white/10 flex items-center justify-center text-[10px] font-bold">
+                      {ministry.leaderName.substring(0, 2).toUpperCase()}
+                    </div>
+                    <span className="text-xs text-white/60">{ministry.leaderName}</span>
+                  </div>
+                  <ChevronRight className="w-4 h-4 text-white/40" />
+                </div>
+              </CardContent>
+            </Card>
+          </motion.div>
+        ))}
+      </div>
+    </div>
+  );
+}

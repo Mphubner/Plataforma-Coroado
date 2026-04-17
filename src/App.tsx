@@ -39,7 +39,13 @@ import {
   User,
   MoreVertical,
   RefreshCw,
-  Award
+  Award,
+  Sparkles,
+  PlayCircle,
+  Captions,
+  AlertTriangle,
+  CreditCard,
+  Mail
 } from "lucide-react"
 import { motion, AnimatePresence } from "motion/react"
 import { Layout } from "./components/Layout"
@@ -49,6 +55,10 @@ import { SocialView } from "./components/SocialView"
 import { UnitsView } from "./components/UnitsView"
 import { SocialMediaView } from "./components/SocialMediaView"
 import { StoreView } from "./components/StoreView"
+import { MinistriesView } from "./components/MinistriesView"
+import { PastoralCareView } from "./components/PastoralCareView"
+import { FinanceView } from "./components/FinanceView"
+import { EventsView } from "./components/EventsView"
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
@@ -590,13 +600,17 @@ export default function App() {
           {activeTab === "members" && <MembersView />}
           {activeTab === "cell" && <CellView isLoggedIn={isLoggedIn} isLeader={isLeader} onTabChange={setActiveTab} />}
           {activeTab === "school" && <SchoolView />}
+          {activeTab === "ministries" && <MinistriesView />}
           {activeTab === "store" && <StoreView />}
+          {activeTab === "events" && <EventsView />}
+          {activeTab === "finance" && <FinanceView />}
           {activeTab === "pastors" && <PastorsView />}
           {activeTab === "social" && <SocialView />}
           {activeTab === "units" && <UnitsView />}
           {activeTab === "media" && <SocialMediaView />}
           {activeTab === "jornada" && <JornadaView />}
           {activeTab === "admin" && <AdminView />}
+          {activeTab === "pastoral" && <PastoralCareView />}
         </Layout>
       </SchoolProvider>
     </CellProvider>
@@ -745,6 +759,7 @@ function CellSchoolTab({ members }: { members: CellMember[] }) {
   const { courses, recommendCourse, recommendations } = useSchool();
   const [selectedMember, setSelectedMember] = React.useState<string | null>(null);
   const [selectedCourse, setSelectedCourse] = React.useState<string | null>(null);
+  const [showRecommendModal, setShowRecommendModal] = React.useState(false);
 
   // Mock progress for cell members
   const getMemberProgress = (memberId: string) => {
@@ -753,6 +768,44 @@ function CellSchoolTab({ members }: { members: CellMember[] }) {
 
   return (
     <div className="space-y-6">
+      {showRecommendModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center px-4">
+          <div className="absolute inset-0 bg-black/80 backdrop-blur-sm" onClick={() => setShowRecommendModal(false)} />
+          <div className="relative bg-zinc-900 border border-white/10 rounded-xl w-full max-w-md p-6 shadow-2xl">
+            <h2 className="text-xl font-bold mb-2">Recomendar Curso</h2>
+            <p className="text-sm text-white/60 mb-6">Escolha um curso para atribuir a este membro.</p>
+            
+            <div className="space-y-4">
+              <select 
+                className="w-full h-10 px-3 rounded-md bg-black border border-white/10 text-sm"
+                onChange={(e) => setSelectedCourse(e.target.value)}
+                value={selectedCourse || ""}
+              >
+                <option value="" disabled>Selecione um curso...</option>
+                {courses.map(c => (
+                  <option key={c.id} value={c.id}>{c.title}</option>
+                ))}
+              </select>
+              <div className="flex gap-2">
+                <Button variant="outline" className="flex-1 border-white/10" onClick={() => setShowRecommendModal(false)}>Cancelar</Button>
+                <Button 
+                  className="flex-1 bg-primary text-black" 
+                  disabled={!selectedCourse}
+                  onClick={() => {
+                    if (selectedCourse && selectedMember) {
+                      recommendCourse(selectedMember, selectedCourse);
+                      setSelectedCourse(null);
+                      setShowRecommendModal(false);
+                    }
+                  }}
+                >
+                  Enviar Recomendação
+                </Button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
       <div className="grid md:grid-cols-3 gap-4">
         <Card className="bg-zinc-900 border-white/10">
           <CardContent className="p-6">
@@ -810,43 +863,9 @@ function CellSchoolTab({ members }: { members: CellMember[] }) {
                   </div>
 
                   <div className="flex items-center gap-2">
-                    <Dialog>
-                      <DialogTrigger asChild>
-                        <Button variant="outline" size="sm" className="border-white/10" onClick={() => setSelectedMember(member.id)}>
-                          <Plus className="mr-2 h-4 w-4" /> Recomendar Curso
-                        </Button>
-                      </DialogTrigger>
-                      <DialogContent className="bg-zinc-900 border-white/10 text-white">
-                        <DialogHeader>
-                          <DialogTitle>Recomendar Curso para {member.name}</DialogTitle>
-                          <DialogDescription>Escolha um curso para atribuir a este membro.</DialogDescription>
-                        </DialogHeader>
-                        <div className="space-y-4 py-4">
-                          <select 
-                            className="w-full h-10 px-3 rounded-md bg-black border border-white/10 text-sm"
-                            onChange={(e) => setSelectedCourse(e.target.value)}
-                            value={selectedCourse || ""}
-                          >
-                            <option value="" disabled>Selecione um curso...</option>
-                            {courses.map(c => (
-                              <option key={c.id} value={c.id}>{c.title}</option>
-                            ))}
-                          </select>
-                          <Button 
-                            className="w-full bg-primary text-black" 
-                            disabled={!selectedCourse}
-                            onClick={() => {
-                              if (selectedCourse && selectedMember) {
-                                recommendCourse(selectedMember, selectedCourse);
-                                setSelectedCourse(null);
-                              }
-                            }}
-                          >
-                            Enviar Recomendação
-                          </Button>
-                        </div>
-                      </DialogContent>
-                    </Dialog>
+                    <Button variant="outline" size="sm" className="border-white/10" onClick={() => { setSelectedMember(member.id); setShowRecommendModal(true); }}>
+                      <Plus className="mr-2 h-4 w-4" /> Recomendar Curso
+                    </Button>
                   </div>
                 </div>
               );
@@ -871,7 +890,7 @@ function CellManagementView({ isLeader }: { isLeader: boolean }) {
   const [attendanceSaved, setAttendanceSaved] = React.useState(false)
   const [searchQuery, setSearchQuery] = React.useState("");
 
-  const { members, tasks, categories, events, posts, materials, visitors, finances, setCategories, generateScale, takeTask, untakeTask, addTask, addEvent, addPost, updatePost, addMaterial, addVisitor, addMember, addFinance } = useCell();
+  const { members, tasks, categories, events, posts, materials, visitors, finances, prayers, reports, setCategories, generateScale, takeTask, untakeTask, addTask, addEvent, addPost, updatePost, addMaterial, addVisitor, addMember, addFinance } = useCell();
   const [newCategory, setNewCategory] = React.useState("");
   const [newTask, setNewTask] = React.useState({ title: '', description: '', category: 'Louvor', assignee: null as string | null, column: 'Próximo Encontro (15/04)' });
   const [newEvent, setNewEvent] = React.useState({ title: '', date: '', time: '', location: '', description: '', targetAudience: 'Toda a Célula' });
@@ -2183,10 +2202,10 @@ function HomeView({ onTabChange }: { onTabChange: (tab: string) => void }) {
             <Button 
               size="lg" 
               variant="outline" 
-              onClick={() => onTabChange("media")}
-              className="border-white/10 hover:bg-white/5 rounded-full px-10 h-14 text-lg font-bold backdrop-blur-sm transition-all hover:scale-105 active:scale-95"
+              onClick={() => document.getElementById('novo-aqui-modal')?.classList.remove('hidden')}
+              className="border-primary/50 text-primary hover:bg-primary/10 rounded-full px-10 h-14 text-lg font-bold backdrop-blur-sm transition-all hover:scale-105 active:scale-95 flex items-center gap-2"
             >
-              Nossa História
+              <Heart className="w-5 h-5" /> Novo Aqui?
             </Button>
           </motion.div>
         </div>
@@ -2294,6 +2313,59 @@ function HomeView({ onTabChange }: { onTabChange: (tab: string) => void }) {
           ))}
         </div>
       </section>
+
+      {/* NOVO AQUI MODAL */}
+      <div id="novo-aqui-modal" className="fixed inset-0 z-[100] hidden">
+        <div className="absolute inset-0 bg-black/80 backdrop-blur-sm" onClick={(e) => {
+          if (e.target === e.currentTarget) {
+            document.getElementById('novo-aqui-modal')?.classList.add('hidden');
+          }
+        }} />
+        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-full max-w-lg glass-card p-8 rounded-[2.5rem] flex flex-col items-center text-center">
+          <Button 
+            variant="ghost" 
+            size="icon" 
+            onClick={() => document.getElementById('novo-aqui-modal')?.classList.add('hidden')}
+            className="absolute top-6 right-6 rounded-full hover:bg-white/10"
+          >
+            <X className="w-5 h-5" />
+          </Button>
+          
+          <div className="w-16 h-16 rounded-full bg-primary/10 text-primary flex items-center justify-center mb-6">
+            <Heart className="w-8 h-8" />
+          </div>
+          
+          <h3 className="text-3xl font-black font-serif italic mb-2">Bem-vindo à Família!</h3>
+          <p className="text-white/60 mb-8 max-w-sm">
+            Que alegria ter você com a gente. Preencha rapidinho para te conhecermos melhor e conectarmos você a uma célula perto de casa!
+          </p>
+
+          <div className="w-full space-y-4 text-left">
+            <div className="space-y-2">
+              <label className="text-xs font-bold text-white/40 uppercase">Seu Nome</label>
+              <Input placeholder="Como gosta de ser chamado?" className="bg-black/50 border-white/10" />
+            </div>
+            <div className="space-y-2">
+              <label className="text-xs font-bold text-white/40 uppercase">WhatsApp</label>
+              <Input placeholder="(00) 00000-0000" className="bg-black/50 border-white/10" />
+            </div>
+            <div className="space-y-2">
+              <label className="text-xs font-bold text-white/40 uppercase">Onde você mora? (Bairro)</label>
+              <Input placeholder="Ex: Muquiçaba..." className="bg-black/50 border-white/10" />
+            </div>
+            
+            <Button 
+              className="w-full h-12 bg-primary text-black font-bold uppercase tracking-wider mt-4"
+              onClick={() => {
+                alert("Obrigado! Nossos líderes entrarão em contato com você em breve!");
+                document.getElementById('novo-aqui-modal')?.classList.add('hidden');
+              }}
+            >
+              Enviar Saudação
+            </Button>
+          </div>
+        </div>
+      </div>
     </div>
   )
 }
@@ -2316,6 +2388,10 @@ function MembersView() {
     if (!currentUser.availability.includes(newArea)) {
       updateMemberAvailability(currentUser.id, [...currentUser.availability, newArea]);
     }
+  };
+
+  const handleRemoveArea = (areaToRemove: string) => {
+    updateMemberAvailability(currentUser.id, currentUser.availability.filter(a => a !== areaToRemove));
   };
 
   const handleModalSubmit = () => {
@@ -2651,7 +2727,7 @@ function MembersView() {
 }
 
 function SchoolView() {
-  const { courses, enrollments, savedCourses, enrollInCourse, markLessonComplete, toggleSavedCourse, purchaseCourse } = useSchool();
+  const { courses, enrollments, savedCourses, enrollInCourse, markLessonComplete, toggleSavedCourse, purchaseCourse, subscribeToPlan } = useSchool();
   const [selectedCourse, setSelectedCourse] = React.useState<Course | null>(null);
   const [activePlayerCourse, setActivePlayerCourse] = React.useState<Course | null>(null);
   const [activeLesson, setActiveLesson] = React.useState<Lesson | null>(null);
@@ -3459,9 +3535,9 @@ function SchoolView() {
                         )}
                       </div>
                       <div className="mt-auto space-y-2">
-                        <Textarea 
+                        <textarea 
                           placeholder="Faça uma anotação..." 
-                          className="bg-black/50 border-white/10 resize-none" 
+                          className="w-full bg-black/50 border border-white/10 rounded-md p-3 text-sm resize-none" 
                           rows={3}
                           value={noteText}
                           onChange={(e) => setNoteText(e.target.value)}
@@ -3504,9 +3580,9 @@ function SchoolView() {
                         )}
                       </div>
                       <div className="mt-auto space-y-2">
-                        <Textarea 
+                        <textarea 
                           placeholder="Qual a sua dúvida?" 
-                          className="bg-black/50 border-white/10 resize-none" 
+                          className="w-full bg-black/50 border border-white/10 rounded-md p-3 text-sm resize-none" 
                           rows={3}
                           value={forumQuestionText}
                           onChange={(e) => setForumQuestionText(e.target.value)}
@@ -3990,10 +4066,10 @@ function AdminJornadaTab() {
             </div>
             <div className="space-y-2">
               <label className="text-sm font-bold">Descrição</label>
-              <Textarea 
+              <textarea 
                 value={newTrack.description} 
                 onChange={e => setNewTrack({...newTrack, description: e.target.value})} 
-                className="bg-black border-white/10" 
+                className="w-full bg-black border border-white/10 rounded-md p-3 text-sm min-h-[100px]" 
               />
             </div>
             <div className="space-y-2">
@@ -4818,9 +4894,9 @@ function AdminSupport() {
                   </div>
                 ) : replyingTo === q.id ? (
                   <div className="space-y-2 mt-4 pt-4 border-t border-white/10">
-                    <Textarea 
+                    <textarea 
                       placeholder="Sua resposta oficial..." 
-                      className="bg-black border-white/10"
+                      className="w-full bg-black border border-white/10 rounded-md p-3 text-sm min-h-[100px]"
                       value={replyText}
                       onChange={(e) => setReplyText(e.target.value)}
                     />
